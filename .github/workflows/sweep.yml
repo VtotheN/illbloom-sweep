@@ -1,12 +1,7 @@
-name: ill-bloom-sweep
+name: ill-bloom-sweep-zhcn
 
 on:
   workflow_dispatch:
-    inputs:
-      shard_count:
-        description: 'Number of parallel shards'
-        default: '32'
-        required: false
 
 jobs:
   sweep:
@@ -24,9 +19,9 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y libssl-dev libsecp256k1-dev gcc
 
-    - name: Compile sweephit
+    - name: Compile sweephit (Chinese Simplified)
       run: |
-        gcc -O3 -o sweephit sweephit.c \
+        gcc -O3 -o sweephit sweephit_zhcn.c \
           pbkdf2.c hmac.c sha2.c sha3.c ripemd160.c bip39.c memzero.c rand.c \
           -lssl -lcrypto -lsecp256k1
         echo "compiled OK"
@@ -50,6 +45,7 @@ jobs:
         echo "Shard $SHARD: $SHARD_START -> $SHARD_END ($(( SHARD_END - SHARD_START )) seeds)"
 
     - name: Run sweep
+      timeout-minutes: 360
       run: |
         ./sweephit 0 ${{ steps.range.outputs.shard_start }} ${{ steps.range.outputs.shard_end }} victims.bin \
           > hits_shard_${{ matrix.shard }}.txt 2>/dev/null || true
