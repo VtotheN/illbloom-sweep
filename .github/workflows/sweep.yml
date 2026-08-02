@@ -27,7 +27,7 @@ jobs:
     - name: Compile sweephit
       run: |
         gcc -O3 -o sweephit sweephit.c \
-          pbkdf2.c hmac.c sha2.c sha3.c ripemd160.c bip39.c memzero.c \
+          pbkdf2.c hmac.c sha2.c sha3.c ripemd160.c bip39.c memzero.c rand.c \
           -lssl -lcrypto -lsecp256k1
         echo "compiled OK"
 
