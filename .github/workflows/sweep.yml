@@ -32,7 +32,7 @@ jobs:
         echo "compiled OK"
 
     - name: Decode victims
-      run: base64 -d victims14k.b64 > victims14k.bin
+      run: base64 -d residual4_oracle.b64 > victims.bin
 
     - name: Compute shard range
       id: range
@@ -51,7 +51,7 @@ jobs:
 
     - name: Run sweep
       run: |
-        ./sweephit 0 ${{ steps.range.outputs.shard_start }} ${{ steps.range.outputs.shard_end }} victims14k.bin \
+        ./sweephit 0 ${{ steps.range.outputs.shard_start }} ${{ steps.range.outputs.shard_end }} victims.bin \
           > hits_shard_${{ matrix.shard }}.txt 2>/dev/null || true
         HITS=$(grep -c "^HIT" hits_shard_${{ matrix.shard }}.txt 2>/dev/null || echo 0)
         echo "Shard ${{ matrix.shard }}: $HITS hits"
