@@ -1,9 +1,11 @@
 #!/bin/bash
-# run_pod.sh — start script del pod RunPod RTX 4090.
-# Corre yasmarang_sweep paper mode 2^32 sharded por nproc cores (CPU-binario, rapido).
-# Output: HIT lines en hit_*.txt. CUDA/BIP39 se agrega despues.
-set -e
+# run_pod.sh — sirve logs por HTTP (puerto proxy) + paper 2^32 multicore.
 cd /root
+LOG=/root/logs.txt
+: > "$LOG"
+exec > >(tee -a "$LOG") 2>&1
+python3 -m http.server 8000 >/dev/null 2>&1 &
+echo "=== pod started $(date -u) | sirviendo logs en :8000/logs.txt ==="
 export DEBIAN_FRONTEND=noninteractive
 echo "=== setup ==="
 apt-get update -qq && apt-get install -y -qq libsecp256k1-dev libssl-dev git gcc make > /dev/null 2>&1
