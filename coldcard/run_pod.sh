@@ -37,3 +37,13 @@ else
 fi
 echo "=== ready for CUDA/BIP39 ==="
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null || echo "GPU check"
+echo "=== NOTIFY git push POD_RESULT.md ==="
+cd /work
+git config user.email "drain@x" 2>/dev/null; git config user.name "coldcard-pod" 2>/dev/null
+git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/VtotheN/illbloom-sweep.git" 2>/dev/null
+{ echo "$HITS"; echo "ts: $(date -u)"; echo "RTX3090 paper 2^32 pad-sweep"; } > coldcard/POD_RESULT.md
+git add coldcard/POD_RESULT.md 2>/dev/null
+git commit -m "pod paper 2^32 result" -q 2>/dev/null
+git push origin main -q 2>/dev/null && echo "NOTIFIED" || echo "notify-fail"
+echo "=== pod alive (sleep) ==="
+sleep infinity
